@@ -1,0 +1,6 @@
+__pycache__
+*.pyc
+train.py
+train.log
+tests
+docs

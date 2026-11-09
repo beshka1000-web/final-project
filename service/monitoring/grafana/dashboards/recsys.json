@@ -1,0 +1,249 @@
+{
+ "uid": "recsys",
+ "title": "Recsys: метрики сервиса и модели",
+ "schemaVersion": 39,
+ "version": 1,
+ "refresh": "10s",
+ "time": {
+  "from": "now-30m",
+  "to": "now"
+ },
+ "panels": [
+  {
+   "id": 1,
+   "title": "Precision@3 модели (CV)",
+   "type": "stat",
+   "gridPos": {
+    "x": 0,
+    "y": 0,
+    "w": 6,
+    "h": 4
+   },
+   "datasource": {
+    "type": "prometheus",
+    "uid": "prometheus"
+   },
+   "targets": [
+    {
+     "expr": "recsys_model_precision_at_3_cv",
+     "legendFormat": "P@3",
+     "refId": "A"
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {},
+    "overrides": []
+   }
+  },
+  {
+   "id": 2,
+   "title": "Запросов в секунду",
+   "type": "stat",
+   "gridPos": {
+    "x": 6,
+    "y": 0,
+    "w": 6,
+    "h": 4
+   },
+   "datasource": {
+    "type": "prometheus",
+    "uid": "prometheus"
+   },
+   "targets": [
+    {
+     "expr": "sum(rate(recsys_requests_total[$__rate_interval]))",
+     "legendFormat": "RPS",
+     "refId": "A"
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "reqps"
+    },
+    "overrides": []
+   }
+  },
+  {
+   "id": 3,
+   "title": "Доля холодного старта",
+   "type": "gauge",
+   "gridPos": {
+    "x": 12,
+    "y": 0,
+    "w": 6,
+    "h": 4
+   },
+   "datasource": {
+    "type": "prometheus",
+    "uid": "prometheus"
+   },
+   "targets": [
+    {
+     "expr": "sum(increase(recsys_requests_total{strategy=\"popular_fallback\"}[$__range])) / sum(increase(recsys_requests_total[$__range]))",
+     "legendFormat": "fallback",
+     "refId": "A"
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "percentunit"
+    },
+    "overrides": []
+   }
+  },
+  {
+   "id": 4,
+   "title": "Ошибки 4xx/5xx, за период",
+   "type": "stat",
+   "gridPos": {
+    "x": 18,
+    "y": 0,
+    "w": 6,
+    "h": 4
+   },
+   "datasource": {
+    "type": "prometheus",
+    "uid": "prometheus"
+   },
+   "targets": [
+    {
+     "expr": "sum(increase(recsys_http_requests_total{status=~\"[45]..\"}[$__range])) or vector(0)",
+     "legendFormat": "ошибки",
+     "refId": "A"
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {},
+    "overrides": []
+   }
+  },
+  {
+   "id": 5,
+   "title": "Запросы по стратегии",
+   "type": "timeseries",
+   "gridPos": {
+    "x": 0,
+    "y": 4,
+    "w": 12,
+    "h": 8
+   },
+   "datasource": {
+    "type": "prometheus",
+    "uid": "prometheus"
+   },
+   "targets": [
+    {
+     "expr": "sum by (strategy) (rate(recsys_requests_total[$__rate_interval]))",
+     "legendFormat": "{{strategy}}",
+     "refId": "A"
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "reqps"
+    },
+    "overrides": []
+   }
+  },
+  {
+   "id": 6,
+   "title": "Задержка расчёта (p50 / p95 / p99)",
+   "type": "timeseries",
+   "gridPos": {
+    "x": 12,
+    "y": 4,
+    "w": 12,
+    "h": 8
+   },
+   "datasource": {
+    "type": "prometheus",
+    "uid": "prometheus"
+   },
+   "targets": [
+    {
+     "expr": "histogram_quantile(0.5, sum by (le) (rate(recsys_request_seconds_bucket[$__rate_interval])))",
+     "legendFormat": "p50",
+     "refId": "A"
+    },
+    {
+     "expr": "histogram_quantile(0.95, sum by (le) (rate(recsys_request_seconds_bucket[$__rate_interval])))",
+     "legendFormat": "p95",
+     "refId": "B"
+    },
+    {
+     "expr": "histogram_quantile(0.99, sum by (le) (rate(recsys_request_seconds_bucket[$__rate_interval])))",
+     "legendFormat": "p99",
+     "refId": "C"
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "s"
+    },
+    "overrides": []
+   }
+  },
+  {
+   "id": 7,
+   "title": "Скор лучшего товара (p50 / p95)",
+   "type": "timeseries",
+   "gridPos": {
+    "x": 0,
+    "y": 12,
+    "w": 12,
+    "h": 8
+   },
+   "datasource": {
+    "type": "prometheus",
+    "uid": "prometheus"
+   },
+   "targets": [
+    {
+     "expr": "histogram_quantile(0.5, sum by (le) (rate(recsys_top_score_bucket[$__rate_interval])))",
+     "legendFormat": "p50",
+     "refId": "A"
+    },
+    {
+     "expr": "histogram_quantile(0.95, sum by (le) (rate(recsys_top_score_bucket[$__rate_interval])))",
+     "legendFormat": "p95",
+     "refId": "B"
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {},
+    "overrides": []
+   }
+  },
+  {
+   "id": 8,
+   "title": "HTTP-запросы по путям и статусам",
+   "type": "timeseries",
+   "gridPos": {
+    "x": 12,
+    "y": 12,
+    "w": 12,
+    "h": 8
+   },
+   "datasource": {
+    "type": "prometheus",
+    "uid": "prometheus"
+   },
+   "targets": [
+    {
+     "expr": "sum by (path, status) (rate(recsys_http_requests_total[$__rate_interval]))",
+     "legendFormat": "{{path}} {{status}}",
+     "refId": "A"
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "reqps"
+    },
+    "overrides": []
+   }
+  }
+ ],
+ "tags": [
+  "recsys"
+ ]
+}

@@ -1,0 +1,38 @@
+services:
+  recsys:
+    build: .
+    image: recsys:1.0
+    container_name: recsys
+    restart: unless-stopped
+    environment:
+      ARTIFACTS_DIR: /srv/artifacts
+    volumes:
+      # артефакты модели вынесены из образа: после `python service/train.py`
+      # достаточно `docker compose restart recsys`, пересборка образа не нужна
+      - ./artifacts:/srv/artifacts:ro
+    ports: ["80:8000", "8000:8000"]
+  prometheus:
+    image: prom/prometheus:v2.55.1
+    container_name: prometheus
+    restart: unless-stopped
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prom_data:/prometheus
+    ports: ["9090:9090"]
+    depends_on: [recsys]
+  grafana:
+    image: grafana/grafana:11.3.0
+    container_name: grafana
+    restart: unless-stopped
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:-admin}
+    volumes:
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - grafana_data:/var/lib/grafana
+    ports: ["3000:3000"]
+    depends_on: [prometheus]
+volumes:
+  prom_data:
+  grafana_data:
